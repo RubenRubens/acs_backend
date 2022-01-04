@@ -2,9 +2,13 @@ from django.urls import path
 
 from . import views
 
+
 urlpatterns = [
-	path('post/', views.PostList.as_view()),
-	path('post/<int:id>/', views.PostDetail.as_view()),
-	path('comment/', views.CommentList.as_view()),
-	path('comment/<int:id>/', views.CommentDetail.as_view()),
+	path('post/', views.PostCreate.as_view()),
+	path('post/<int:pk>/', views.PostDetail.as_view()),
+	path('post_list/<int:user_pk>/', views.PostList.as_view()),
+	path('comment/', views.CommentCreate.as_view()),
+	path('comment/<int:pk>/', views.CommentRetrieve.as_view()),
+	path('comment_destroy/<int:pk>/', views.CommentDestroy.as_view()),
+	path('comment_list/<int:post_pk>/', views.CommentList.as_view()),
 ]
