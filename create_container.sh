@@ -14,5 +14,5 @@ podman run --name postgres_acs \
 podman run --name django_acs \
 	--pod acs_pod \
 	--volume $(pwd)/src:/app/src:Z \
-	-it hpacm_img bash
+	-it django_acs_img bash
 
