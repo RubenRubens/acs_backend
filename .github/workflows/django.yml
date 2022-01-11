@@ -29,4 +29,5 @@ jobs:
         pip install -r testing_requirements.txt
     - name: Run Tests
       run: |
+        cd src
         python manage.py test --settings=config.testing_settings
