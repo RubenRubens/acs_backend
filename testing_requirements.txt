@@ -1,0 +1,6 @@
+django
+black
+djangorestframework
+django-rest-authtoken
+dj-rest-auth
+django-allauth
