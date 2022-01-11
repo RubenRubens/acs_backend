@@ -80,29 +80,30 @@ class PostTest(TestCase):
         self.assertEquals(Post.objects.filter(author__username='mario').count(), 1)
         self.assertEquals(Post.objects.get(author__username='mario').likes, 0)
 
-    # def test_list_posts(self):
-    #     '''
-    #     List all posts.
-    #     '''
-    #     POSTS_NUMBER = 4
+    def test_list_posts(self):
+        '''
+        List all posts.
+        '''
+        POSTS_NUMBER = 4
 
-    #     # Post some images
-    #     for _ in range(POSTS_NUMBER):
-    #         self.mario.post(
-    #             '/photos/post/',
-    #             {'image_file': SimpleUploadedFile(name='test_image.jpg', content=open('photos/test/foo.jpg', 'rb').read(), content_type='image/jpeg')}
-    #         )
-    #     self.assertEquals(Post.objects.filter(author__username='mario').count(), POSTS_NUMBER)
+        # Post some images
+        for _ in range(POSTS_NUMBER):
+            self.mario.post(
+                '/photos/post/',
+                {'image_file': SimpleUploadedFile(name='test_image.jpg', content=open('photos/test/foo.jpg', 'rb').read(), content_type='image/jpeg')}
+            )
+        self.assertEquals(Post.objects.filter(author__username='mario').count(), POSTS_NUMBER)
 
-    #     # Mario gets the list of all of the posts
-    #     response = self.mario.get(f'/photos/post_list/{User.objects.get(username="mario")}/')
-    #     self.assertEquals(response.status_code, status.HTTP_200_OK)
-    #     self.assertEquals(len(response.data), POSTS_NUMBER)
+        # Mario gets the list of all of the posts
+        mario_user_id = User.objects.get(username="mario").id
+        response = self.mario.get(f'/photos/post_list/{mario_user_id}/')
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertEquals(len(response.data), POSTS_NUMBER)
 
-    #     # Daniel gets the list of all of the posts
-    #     response = self.daniel.get(f'/photos/post_list/{User.objects.get(username="mario")}/')
-    #     self.assertEquals(response.status_code, status.HTTP_200_OK)
-    #     self.assertEquals(len(response.data), POSTS_NUMBER)
+        # Daniel gets the list of all of the posts
+        response = self.daniel.get(f'/photos/post_list/{mario_user_id}/')
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertEquals(len(response.data), POSTS_NUMBER)
 
     def test_destroy_post(self):
         '''
