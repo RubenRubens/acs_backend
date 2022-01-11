@@ -1,5 +1,5 @@
 django
-black
+Pillow
 djangorestframework
 django-rest-authtoken
 dj-rest-auth
