@@ -225,7 +225,7 @@ class CommentTest(TestCase):
             {'image_file': SimpleUploadedFile(name='test_image.jpg', content=open('photos/test/foo.jpg', 'rb').read(), content_type='image/jpeg')}
         )
         self.daniel_post_id = Post.objects.get(author__username='daniel').id
-    
+
     def test_create_comment(self):
         '''
         Create a new comment.
@@ -288,154 +288,53 @@ class CommentTest(TestCase):
         response = self.mario.get(f'/photos/comment_list/{self.daniel_post_id}/')
         self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_destroy_comment(self):
+        '''
+        Deletes a comment.
+        '''
+        # Mario comments in it's own post
+        self.mario.post(
+            '/photos/comment/',
+            {'post': self.mario_post_id, 'text': 'demo comment'}
+        )
+        comment_id = Comment.objects.get(post__pk=self.mario_post_id).id
 
-# class CommentTest2(TestCase):
+        # Daniel attempts to delete Mario's comment
+        response = self.daniel.delete(f'/photos/comment_destroy/{comment_id}/')
+        self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEquals(Comment.objects.filter(post__pk=self.mario_post_id).count(), 1)
 
-#     def test_something(self):
-#         '''
-#         Create two users. Daniel is a follower of Mario.
-#         '''
-#         client = APIClient()
-#         client.post(
-#             '/account/registration/',
-#             {
-#                 'username': 'mario',
-#                 'password': 'secret_001',
-#                 'first_name': 'Mario',
-#                 'last_name': 'A.'
-#             },
-#             format='json'
-#         )
-#         client.post(
-#             '/account/login/',
-#             {'username': 'mario', 'password': 'secret_001'}
-#         )
+        # Mario deletes successfully the comment
+        response = self.mario.delete(f'/photos/comment_destroy/{comment_id}/')
+        self.assertEquals(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEquals(Comment.objects.filter(post__pk=self.mario_post_id).count(), 0)
 
-#         client.post(
-#             '/account/registration/',
-#             {
-#                 'username': 'daniel',
-#                 'password': 'secret_001',
-#                 'first_name': 'Daniel',
-#                 'last_name': 'B.'
-#             },
-#             format='json'
-#         )
-#         client.post(
-#             '/account/login/',
-#             {'username': 'daniel', 'password': 'secret_001'}
-#         )
+    def test_retrieve_comment(self):
+        '''
+        Retrieve a comment.
+        '''
+        # Mario comments something
+        self.mario.post(
+            '/photos/comment/',
+            {'post': self.mario_post_id, 'text': 'some random comment'}
+        )
+        comment_id = Comment.objects.get(post__id=self.mario_post_id).id
 
-#     def test_destroy_comment(self):
-#         '''
-#         Deletes a comment.
-#         '''
-#         mario = APIClient()
-#         token_mario = Token.objects.get(user__username='mario')
-#         mario.credentials(HTTP_AUTHORIZATION='Token ' + token_mario.key)
-        
-#         daniel = APIClient()
-#         token_daniel = Token.objects.get(user__username='daniel')
-#         daniel.credentials(HTTP_AUTHORIZATION='Token ' + token_daniel.key)
+        # Daniel attempts to retrieve the comment
+        response = self.daniel.get(f'/photos/comment/{comment_id}/')
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
 
-#         # Daniel is following Mario
-#         daniel.post(
-#             '/account/send_follower_petition/',
-#             {'user': User.objects.get(username='mario').id}
-#         )
+        # Mario attemps to retrieve its own comment
+        response = self.mario.get(f'/photos/comment/{comment_id}/')
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
 
-#         mario.post(
-#             '/account/accept_follower_petition/',
-#             {'possible_follower': User.objects.get(username='daniel').id}
-#         )
+        # Daniel comments something on his own post
+        self.daniel.post(
+            '/photos/comment/',
+            {'post': self.daniel_post_id, 'text': 'some random comment'}
+        )
+        comment_id = Comment.objects.get(post__id=self.daniel_post_id).id
 
-#         # Mario creates a post
-#         mario.post(
-#             '/photos/post/',
-#             {'image_file': SimpleUploadedFile(name='test_image.jpg', content=open('photos/test/foo.jpg', 'rb').read(), content_type='image/jpeg')}
-#         )
-#         mario_post_id = Post.objects.get(author__username='mario').id
-
-#         # Mario comments in it's own post
-#         mario.post(
-#             '/photos/comment/',
-#             {'post': mario_post_id, 'text': 'demo comment'}
-#         )
-#         comment_id = Comment.objects.get(post__pk=mario_post_id).id
-
-#         # Daniel attempts to delete Mario's comment
-#         response = daniel.delete(f'/photos/comment_destroy/{comment_id}/')
-#         self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
-#         self.assertEquals(Comment.objects.filter(post__pk=mario_post_id).count(), 1)
-
-#         # Mario deletes successfully the comment
-#         response = mario.delete(f'/photos/comment_destroy/{mario_post_id}/')
-#         self.assertEquals(response.status_code, status.HTTP_204_NO_CONTENT)
-#         self.assertEquals(Comment.objects.filter(post__pk=mario_post_id).count(), 0)
-
-#     def test_retrieve_comment(self):
-#         '''
-#         Retrieve a comment.
-#         '''
-#         mario = APIClient()
-#         token_mario = Token.objects.get(user__username='mario')
-#         mario.credentials(HTTP_AUTHORIZATION='Token ' + token_mario.key)
-        
-#         daniel = APIClient()
-#         token_daniel = Token.objects.get(user__username='daniel')
-#         daniel.credentials(HTTP_AUTHORIZATION='Token ' + token_daniel.key)
-
-#         # Daniel is following Mario
-#         daniel.post(
-#             '/account/send_follower_petition/',
-#             {'user': User.objects.get(username='mario').id}
-#         )
-
-#         mario.post(
-#             '/account/accept_follower_petition/',
-#             {'possible_follower': User.objects.get(username='daniel').id}
-#         )
-
-#         # Mario creates a post
-#         mario.post(
-#             '/photos/post/',
-#             {'image_file': SimpleUploadedFile(name='test_image.jpg', content=open('photos/test/foo.jpg', 'rb').read(), content_type='image/jpeg')}
-#         )
-#         mario_post_id = Post.objects.get(author__username='mario').id
-
-#         # Daniel creates a post
-#         daniel.post(
-#             '/photos/post/',
-#             {'image_file': SimpleUploadedFile(name='test_image.jpg', content=open('photos/test/foo.jpg', 'rb').read(), content_type='image/jpeg')}
-#         )
-#         daniel_post_id = Post.objects.get(author__username='daniel').id
-
-#         # Mario comments something
-#         mario.post(
-#             '/photos/comment/',
-#             {'post': mario_post_id, 'text': 'some random comment'}
-#         )
-#         comment_id = Comment.objects.get(post__id=mario_post_id).id
-
-#         # Daniel attempts to retrieve the comment
-#         response = daniel.get(f'/photos/comment/{comment_id}/')
-#         self.assertEquals(response.status_code, status.HTTP_200_OK)
-
-#         # Mario attemps to retrieve its own comment
-#         response = mario.get(f'/photos/post/{comment_id}/')
-#         self.assertEquals(response.status_code, status.HTTP_200_OK)
-
-#         # Daniel comments something on his own post
-#         daniel.post(
-#             '/photos/comment/',
-#             {'post': daniel_post_id, 'text': 'some random comment'}
-#         )
-#         comment_id = Comment.objects.get(post__id=daniel_post_id).id
-
-#         # Mario attempts to retrieve Daniel's comment
-#         response = mario.get(f'/photos/comment/{comment_id}/')
-#         self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
-
-#     def tearDown(self):
-#         User.objects.get(username='mario').delete()
-#         User.objects.get(username='daniel').delete()
+        # Mario attempts to retrieve Daniel's comment
+        response = self.mario.get(f'/photos/comment/{comment_id}/')
+        self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
