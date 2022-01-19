@@ -6,3 +6,6 @@ djangorestframework
 django-rest-authtoken
 dj-rest-auth
 django-allauth
+pyyaml
+uritemplate
+drf-yasg
