@@ -59,6 +59,7 @@ class IsOwnerOrFollower_Post(permissions.BasePermission):
         except Follow.DoesNotExist:
             return obj.author == request.user
 
+
 class IsOwnerOrFollower_User(permissions.BasePermission):
     '''
     Allows the author or any follower to do anything.

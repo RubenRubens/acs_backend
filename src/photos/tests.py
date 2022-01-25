@@ -153,6 +153,36 @@ class PostTest(TestCase):
         # Mario attempts to retrieve the post
         response = self.mario.get(f'/photos/post/{post_id}/')
         self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
+    
+    def test_retrieve_image(self):
+        '''
+        Retrieve an image from a post.
+        '''
+        # Mario posts something
+        self.mario.post(
+            '/photos/post/',
+            {'image_file': SimpleUploadedFile(name='test_image.jpg', content=open('photos/test/foo.jpg', 'rb').read(), content_type='image/jpeg')}
+        )
+        post_id = Post.objects.get(author__username='mario').id
+
+        # Daniel attempts to retrieve the image
+        response = self.daniel.get(f'/photos/image/{post_id}/')
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+
+        # Mario attemps to retrieve its own image
+        response = self.mario.get(f'/photos/image/{post_id}/')
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+
+        # Daniel posts something
+        self.daniel.post(
+            '/photos/post/',
+            {'image_file': SimpleUploadedFile(name='test_image.jpg', content=open('photos/test/foo.jpg', 'rb').read(), content_type='image/jpeg')}
+        )
+        post_id = Post.objects.get(author__username='daniel').id
+
+        # Mario attempts to retrieve the image
+        response = self.mario.get(f'/photos/image/{post_id}/')
+        self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
 class CommentTest(TestCase):

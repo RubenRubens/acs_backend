@@ -1,10 +1,11 @@
 from django.contrib.auth.models import User
 from django.http.response import Http404
-from rest_framework import generics, serializers
+from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from django.db.models import Subquery
 from rest_framework.views import APIView
+from django.http import FileResponse
 
 from accounts.permissions import *
 from accounts.models import Follow
@@ -75,6 +76,21 @@ class CommentList(APIView):
         self.check_object_permissions(request, Post.objects.get(pk=post_pk))
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data)
+
+
+class RetrieveImage(APIView):
+    '''
+    Retrieve an image.
+    '''
+    permission_classes = [IsOwnerOrFollower_User]
+
+    def get(self, request, post_pk):
+        try:
+            post = Post.objects.get(pk=post_pk)
+        except Post.DoesNotExist:
+            raise Http404
+        self.check_object_permissions(request, post.author)
+        return FileResponse(open(post.image_file.path, 'rb'))
 
 
 @api_view(['GET'])
