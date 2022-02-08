@@ -1,6 +1,6 @@
 # _acs_
 
-## How to run this project with Docker?
+## How to run this project?
 
 The only requirement is to have Docker installed. 
 
@@ -15,3 +15,4 @@ In order to stop the containers run:
 ```
 docker-compose down
 ```
+
