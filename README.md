@@ -1,5 +1,17 @@
 # _acs_
 
-The most disruptive social media app out there since it does
-not contain ads or spyware.
+## How to run this project with Docker?
 
+The only requirement is to have Docker installed. 
+
+```
+docker-compose up
+```
+
+Now you should be able to go to `localhost:8000` and start hacking.
+
+In order to stop the containers run:
+
+```
+docker-compose down
+```
