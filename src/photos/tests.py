@@ -117,11 +117,11 @@ class PostTest(TestCase):
         post_id = Post.objects.get(author__username='mario').id
 
         # Daniel attempts to delete the post
-        self.daniel.delete(f'/photos/post/{post_id}/')
+        self.daniel.delete(f'/photos/post_destroy/{post_id}/')
         self.assertEquals(Post.objects.filter(author__username='mario').count(), 1)
 
         # Mario deletes successfully the post
-        self.mario.delete(f'/photos/post/{post_id}/')
+        self.mario.delete(f'/photos/post_destroy/{post_id}/')
         self.assertEquals(Post.objects.filter(author__username='mario').count(), 0)
 
     def test_retrieve_post(self):

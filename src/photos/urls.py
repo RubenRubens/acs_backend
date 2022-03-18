@@ -5,7 +5,8 @@ from . import views
 
 urlpatterns = [
 	path('post/', views.PostCreate.as_view()),
-	path('post/<int:pk>/', views.PostDetail.as_view()),
+	path('post/<int:pk>/', views.PostRetrieve.as_view()),
+	path('post_destroy/<int:pk>/', views.PostDestroy.as_view()),
 	path('post_list/<int:user_pk>/', views.PostList.as_view()),
 	path('image/<int:post_pk>/', views.RetrieveImage.as_view()),
 	path('comment/', views.CommentCreate.as_view()),

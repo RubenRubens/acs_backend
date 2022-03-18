@@ -7,7 +7,7 @@ from django.db.models import Subquery
 from rest_framework.views import APIView
 from django.http import FileResponse
 
-from accounts.permissions import *
+from accounts.permissions import IsOwner, IsFollower
 from accounts.models import Follow
 from .models import Comment, Post
 from .serializers import CommentSerializer, PostSerializer
@@ -21,16 +21,22 @@ class PostCreate(generics.CreateAPIView):
         serializer.save(author=self.request.user)
 
 
-class PostDetail(generics.RetrieveDestroyAPIView):
+class PostRetrieve(generics.RetrieveAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [IsOwnerOrReadOnlyIfIsFollower]
+    permission_classes = [IsOwner | IsFollower]
+
+
+class PostDestroy(generics.DestroyAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = [IsOwner]
 
 
 class CommentCreate(generics.CreateAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [FollowerPermission]
+    permission_classes = [IsOwner | IsFollower]
     
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -39,7 +45,7 @@ class CommentCreate(generics.CreateAPIView):
 class CommentRetrieve(generics.RetrieveAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [IsOwnerOrReadOnlyIfIsFollower]
+    permission_classes = [IsOwner | IsFollower]
 
 
 class CommentDestroy(generics.DestroyAPIView):
@@ -52,7 +58,7 @@ class PostList(APIView):
     '''
     List all posts of a given user
     '''
-    permission_classes = [IsOwnerOrFollower_User]
+    permission_classes = [IsOwner | IsFollower]
 
     def get(self, request, user_pk):
         posts = Post.objects.filter(author__pk=user_pk)
@@ -67,12 +73,12 @@ class CommentList(APIView):
     '''
     List all comments of a given post
     '''
-    permission_classes = [IsOwnerOrFollower_Post]
+    permission_classes = [IsOwner | IsFollower]
 
     def get(self, request, post_pk):
         comments = Comment.objects.filter(post__pk=post_pk)
         if not comments:
-            raise Http404 
+            raise Http404
         self.check_object_permissions(request, Post.objects.get(pk=post_pk))
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data)
@@ -82,19 +88,18 @@ class RetrieveImage(APIView):
     '''
     Retrieve an image.
     '''
-    permission_classes = [IsOwnerOrFollower_User]
+    permission_classes = [IsOwner | IsFollower]
 
     def get(self, request, post_pk):
         try:
             post = Post.objects.get(pk=post_pk)
         except Post.DoesNotExist:
             raise Http404
-        self.check_object_permissions(request, post.author)
+        self.check_object_permissions(request, post)
         return FileResponse(open(post.image_file.path, 'rb'))
 
 
 @api_view(['GET'])
-@permission_classes([FollowerPermission])
 def feed(request):
     following = Follow.objects.filter(follower=request.user)
     user_feed = Post.objects.annotate(author=Subquery(following))

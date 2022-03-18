@@ -19,7 +19,7 @@ from .serializer import (
     SendFollowerPetitionSerializer
 )
 from .models import Account, FollowerPetition, Follow
-from .permissions import IsOwner, IsUserOfTheAccount
+from .permissions import IsOwner
 
 
 class AccountList(ListAPIView):
@@ -41,7 +41,7 @@ class UserCreate(CreateAPIView):
 class UserDetail(RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsUserOfTheAccount]
+    permission_classes = [IsOwner]
 
 
 class FollowerPetitionDetail(RetrieveDestroyAPIView):
