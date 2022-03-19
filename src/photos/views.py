@@ -61,7 +61,7 @@ class PostList(APIView):
     permission_classes = [IsOwner | IsFollower]
 
     def get(self, request, user_pk):
-        posts = Post.objects.filter(author__pk=user_pk)
+        posts = Post.objects.filter(author__pk=user_pk).order_by('-date_published')
         if not posts:
             raise Http404
         self.check_object_permissions(request, User.objects.get(pk=user_pk))
@@ -76,7 +76,7 @@ class CommentList(APIView):
     permission_classes = [IsOwner | IsFollower]
 
     def get(self, request, post_pk):
-        comments = Comment.objects.filter(post__pk=post_pk)
+        comments = Comment.objects.filter(post__pk=post_pk).order_by('date_published')
         if not comments:
             raise Http404
         self.check_object_permissions(request, Post.objects.get(pk=post_pk))
@@ -102,6 +102,6 @@ class RetrieveImage(APIView):
 @api_view(['GET'])
 def feed(request):
     following = Follow.objects.filter(follower=request.user)
-    user_feed = Post.objects.annotate(author=Subquery(following))
+    user_feed = Post.objects.annotate(author=Subquery(following)).order_by('-date_published')
     serializer = PostSerializer(user_feed, many=True)
     return Response(serializer.data)
