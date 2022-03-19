@@ -1,4 +1,5 @@
 from django.db.models import fields
+from django.db import transaction
 from rest_framework.serializers import ModelSerializer
 from django.contrib.auth.models import User
 
@@ -44,18 +45,20 @@ class UserSerializer(ModelSerializer):
         }
 
     def create(self, validated_data):
-        # Create new user
-        user = User(
-            username=validated_data['username'],
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name']
-        )
-        user.set_password(validated_data['password'])
-        user.save()
+        with transaction.atomic():
+            # Create new user
+            user = User(
+                username=validated_data['username'],
+                first_name=validated_data['first_name'],
+                last_name=validated_data['last_name']
+            )
+            user.set_password(validated_data['password'])
+            user.save()
 
-        # Create new account
-        Account(user=user).save()
-        return user
+            # Create new account
+            account = Account(user=user)
+            account.save()
+            return user
 
     def update(self, validated_data):
         user = User(
