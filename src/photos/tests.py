@@ -406,9 +406,12 @@ def isOrderByDate(dates : List[str]) -> bool:
     
     def convert2Seconds(date : str) -> float:
         '''
-        From "2022-03-19T09:47:01.044705+01:00" to seconds
+        From ISO 8601 to seconds
+        Examples
+            "2022-03-19T09:47:01.044705+01:00"
+            "2022-03-19T06:10:32Z"
         '''
-        obtain_time = lambda x: x.split('T')[1].split('+')[0]
+        obtain_time = lambda x: x.split('T')[1].split('+')[0].replace('Z', '')
         time = obtain_time(date)
         (hours, minutes, seconds) = time.split(':')
         return float(hours) * 3600 + float(minutes) * 60 + float(seconds)
