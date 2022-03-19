@@ -6,6 +6,10 @@ from rest_framework.authtoken.models import Token
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 
+import json
+from itertools import pairwise
+from typing import List
+
 from .models import Post, Comment
 
 
@@ -183,6 +187,31 @@ class PostTest(TestCase):
         # Mario attempts to retrieve the image
         response = self.mario.get(f'/photos/image/{post_id}/')
         self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_feed(self):
+        # Mario posts something
+        self.mario.post(
+            '/photos/post/',
+            {'image_file': SimpleUploadedFile(name='test_image.jpg', content=open('photos/test/foo.jpg', 'rb').read(), content_type='image/jpeg')}
+        )
+
+        # Daniel posts something
+        for _ in range(3):
+            self.daniel.post(
+                '/photos/post/',
+                {'image_file': SimpleUploadedFile(name='test_image.jpg', content=open('photos/test/foo.jpg', 'rb').read(), content_type='image/jpeg')}
+            )
+
+        # Mario gets its feed
+        response = self.mario.get('/photos/feed/')
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertEquals(len(response.data), 4)
+        
+        # Check if the feed is ordered by date
+        json_response = response.content.decode('utf8').replace("'", '"')
+        feed = json.loads(json_response)
+        dates = [f['date_published'] for f in feed]
+        self.assertTrue(isOrderByDate(dates))
 
 
 class CommentTest(TestCase):
@@ -368,3 +397,25 @@ class CommentTest(TestCase):
         # Mario attempts to retrieve Daniel's comment
         response = self.mario.get(f'/photos/comment/{comment_id}/')
         self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+def isOrderByDate(dates : List[str]) -> bool:
+    '''
+    Check if a list of dates (represented as strings) are in descending order
+    '''
+    
+    def convert2Seconds(date : str) -> float:
+        '''
+        From "2022-03-19T09:47:01.044705+01:00" to seconds
+        '''
+        obtain_time = lambda x: x.split('T')[1].split('+')[0]
+        time = obtain_time(date)
+        (hours, minutes, seconds) = time.split(':')
+        return float(hours) * 3600 + float(minutes) * 60 + float(seconds)
+
+    dates_in_seconds = [convert2Seconds(date) for date in dates]
+
+    for t1, t2 in pairwise(dates_in_seconds):
+        if (t1 < t2):
+            return False
+    return True

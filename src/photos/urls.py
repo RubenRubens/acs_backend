@@ -4,6 +4,7 @@ from . import views
 
 
 urlpatterns = [
+	path('feed/', views.feed),
 	path('post/', views.PostCreate.as_view()),
 	path('post/<int:pk>/', views.PostRetrieve.as_view()),
 	path('post_destroy/<int:pk>/', views.PostDestroy.as_view()),
