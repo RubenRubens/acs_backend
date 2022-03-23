@@ -10,7 +10,7 @@ import json
 from itertools import pairwise
 from typing import List
 
-from .models import Post, Comment
+from photos.models import Post, Comment
 
 
 class PostTest(TestCase):
