@@ -67,12 +67,23 @@ def send_follower_petition(request):
     '''
     serializer = SendFollowerPetitionSerializer(data=request.data)
     if serializer.is_valid(raise_exception=True):
-        follower_petition = FollowerPetition(
-            user=serializer.validated_data['user'],
-            possible_follower=request.user
-        )
-        follower_petition.save()
-        return Response(SendFollowerPetitionSerializer(follower_petition).data)
+        
+        # Check if the petition has been already made
+        try:
+            follower_petition = FollowerPetition.objects.get(
+                user=serializer.validated_data['user'],
+                possible_follower=request.user
+            )
+            return Response(SendFollowerPetitionSerializer(follower_petition).data)
+
+        # Create a new petition in case it has not been made before
+        except FollowerPetition.DoesNotExist:
+            follower_petition = FollowerPetition(
+                user=serializer.validated_data['user'],
+                possible_follower=request.user
+            )
+            follower_petition.save()
+            return Response(SendFollowerPetitionSerializer(follower_petition).data)
 
 
 @api_view(['POST'])

@@ -58,8 +58,8 @@ class AccountTest(TestCase):
         self.assertEqual(User.objects.filter(username=self.daniel_data['username']).count(), 1)
 
     def test_petitions(self):
-        # TODO: Send several petitions
-        for _ in range(1):
+        # Send several petitions
+        for _ in range(5):
             self.daniel_client.post(
                 '/account/send_follower_petition/',
                 {'user': self.mario.id}
