@@ -26,20 +26,59 @@ class AccountTest(TestCase):
             'first_name': 'Daniel',
             'last_name': 'B.'
         }
+        
+        self.vilma_data = {
+            'username': 'unfriendly_user',
+            'password': 'secret_001',
+            'first_name': 'Vilma',
+            'last_name': 'C.'
+        }
 
         # Registration
-        users, accounts = registration(self.daniel_data, self.mario_data)
-        self.assertEquals(users, 2)
-        self.assertEquals(accounts, 2)
+        users, accounts = registration(self.daniel_data, self.mario_data, self.vilma_data)
+        self.assertEquals(users, 3)
+        self.assertEquals(accounts, 3)
 
         # Login
-        tokens = login(self.daniel_data, self.mario_data)
-        self.assertEquals(tokens, 2)
+        tokens = login(self.daniel_data, self.mario_data, self.vilma_data)
+        self.assertEquals(tokens, 3)
 
-        # Set up test clients (Mario and Daniel)
+        # Set up test clients (Mario, Daniel and Vilman)
         self.mario_client, self.mario  = generateTestClient(self.mario_data['username'])
         self.daniel_client, self.daniel  = generateTestClient(self.daniel_data['username'])
+        self.vilma_client, self.vilma  = generateTestClient(self.vilma_data['username'])
 
+    def test_account_retrieve(self):
+        '''
+        Retrieves Mario's account
+        '''
+        response = self.mario_client.get(f'/account/user/{self.mario.id}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.daniel_client.get(f'/account/user/{self.mario.id}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_account_retrieve_forbidden(self):
+        '''
+        A user tries to retrieve someone else account.
+        '''
+        response = self.vilma_client.get(f'/account/user/{self.daniel.id}/')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_user_retrieve(self):
+        '''
+        Retrieves Mario's user
+        '''
+        response = self.mario_client.get(f'/user/{self.mario.id}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.daniel_client.get(f'/user/{self.mario.id}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_user_retrieve_forbidden(self):
+        '''
+        A user tries to retrieve someone else user.
+        '''
+        response = self.vilma_client.get(f'/user/{self.daniel.id}/')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_account_delation(self):
         '''
