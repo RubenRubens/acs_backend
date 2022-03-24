@@ -61,12 +61,12 @@ class PostTest(TestCase):
 
         # Daniel is following Mario
         self.daniel.post(
-            '/account/send_follower_petition/',
+            '/account/petition/send/',
             {'user': User.objects.get(username='mario').id}
         )
 
         self.mario.post(
-            '/account/accept_follower_petition/',
+            '/account/petition/accept/',
             {'possible_follower': User.objects.get(username='daniel').id}
         )
 
@@ -262,12 +262,12 @@ class CommentTest(TestCase):
 
         # Daniel is following Mario
         self.daniel.post(
-            '/account/send_follower_petition/',
+            '/account/petition/send/',
             {'user': User.objects.get(username='mario').id}
         )
 
         self.mario.post(
-            '/account/accept_follower_petition/',
+            '/account/petition/accept/',
             {'possible_follower': User.objects.get(username='daniel').id}
         )
 
