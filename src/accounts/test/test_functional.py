@@ -86,49 +86,6 @@ class AccountTest(TestCase):
         self.assertEqual(followers, 1)
 
 
-    def test_accept_follower_petition(self):
-        # Daniel sends a following petition to mario
-        client_daniel = APIClient()
-        token_daniel = Token.objects.get(user__username='daniel')
-        client_daniel.credentials(HTTP_AUTHORIZATION='Token ' + token_daniel.key)
-        client_daniel.post(
-            '/account/send_follower_petition/',
-            {'user': User.objects.get(username='mario').id}
-        )
-
-        # Mario accepts Daniel's petition
-        client_mario = APIClient()
-        token_mario = Token.objects.get(user__username='mario')
-        client_mario.credentials(HTTP_AUTHORIZATION='Token ' + token_mario.key)
-        client_mario.post(
-            '/account/accept_follower_petition/',
-            {'possible_follower': User.objects.get(username='daniel').id}
-        )
-
-        # There must be 0 follower petitions and 1 follower
-        follower_petition_number = FollowerPetition.objects.all().count()
-        self.assertEqual(follower_petition_number, 0)
-        follow_number = Follow.objects.all().count()
-        self.assertEqual(follow_number, 1)
-
-    def test_follower_petition_list(self):
-        # Daniel sends a following petition to Mario
-        client_daniel = APIClient()
-        token_daniel = Token.objects.get(user__username='daniel')
-        client_daniel.credentials(HTTP_AUTHORIZATION='Token ' + token_daniel.key)
-        client_daniel.post(
-            '/account/send_follower_petition/',
-            {'user': User.objects.get(username='mario').id}
-        )
-
-        # Mario get the list of petitions
-        client_mario = APIClient()
-        token_mario = Token.objects.get(user__username='mario')
-        client_mario.credentials(HTTP_AUTHORIZATION='Token ' + token_mario.key)
-        response = client_mario.get('/account/follower_petition_list/')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-
 def registration(*users_data) -> Tuple[int, int]:
     '''
     Creates new users and returns the number of users and accounts in the DB
