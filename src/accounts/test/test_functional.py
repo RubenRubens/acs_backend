@@ -1,3 +1,4 @@
+from typing import Tuple
 from django.contrib.auth.models import User
 from django.test import TestCase
 from rest_framework.test import APIClient
@@ -10,103 +11,80 @@ from ..models import Account, Follow, FollowerPetition
 class AccountTest(TestCase):
 
     def setUp(self):
-        '''
-        Create two user accounts.
-        '''
-        client = APIClient()
-        client.post(
-            '/account/registration/',
-            {
-                'username': 'mario',
-                'password': 'secret_001',
-                'first_name': 'Mario',
-                'last_name': 'A.'
-            },
-            format='json'
-        )
-        client.post(
-            '/account/login/',
-            {'username': 'mario', 'password': 'secret_001'}
-        )
 
-        client.post(
-            '/account/registration/',
-            {
-                'username': 'daniel',
-                'password': 'secret_001',
-                'first_name': 'Daniel',
-                'last_name': 'B.'
-            },
-            format='json'
-        )
-        client.post(
-            '/account/login/',
-            {'username': 'daniel', 'password': 'secret_001'}
-        )
+        # Data
+        self.mario_data = {
+            'username': 'mario',
+            'password': 'secret_001',
+            'first_name': 'Mario',
+            'last_name': 'A.'
+        }
 
-    def test_account_registration(self):
-        users_number = User.objects.all().count()
-        accounts_number = Account.objects.all().count()
-        self.assertEquals(users_number, 2)
-        self.assertEquals(accounts_number, 2)
+        self.daniel_data = {
+            'username': 'daniel',
+            'password': 'secret_001',
+            'first_name': 'Daniel',
+            'last_name': 'B.'
+        }
 
-    def test_user_tokens(self):
-        '''
-        Test login and logout.
-        When a new user is created, no token is created.
-        '''
-        token_number = Token.objects.all().count()
-        self.assertEquals(token_number, 2)
+        # Registration
+        users, accounts = registration(self.daniel_data, self.mario_data)
+        self.assertEquals(users, 2)
+        self.assertEquals(accounts, 2)
+
+        # Login
+        tokens = login(self.daniel_data, self.mario_data)
+        self.assertEquals(tokens, 2)
+
+        # Set up test clients (Mario and Daniel)
+        self.mario_client, self.mario  = generateTestClient(self.mario_data['username'])
+        self.daniel_client, self.daniel  = generateTestClient(self.daniel_data['username'])
+
 
     def test_account_delation(self):
-        # Set up the client
-        client = APIClient()
-        token = Token.objects.get(user__username='mario')
-        client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        '''
+        Deletes Mario's account
+        '''
+        self.mario_client.delete(f'/account/user/{self.mario.id}/')
+        self.assertEqual(User.objects.filter(username=self.mario.username).count(), 0)
+        self.assertEqual(Account.objects.filter(user__username=self.mario.username).count(), 0)
 
-        # Obtain the user ID
-        user_id = User.objects.get(username='mario').id
-
-        # Delete the user
-        client.delete(f'/account/user/{user_id}/')
-        self.assertEqual(User.objects.filter(username='mario').count(), 0)
-
-    def test_permission_account_delation(self):
+    def test_account_delation_forbidden(self):
         '''
         A user deletes someone else account.
-        The user "not_lauren" tries to delete the account of "mario".
         '''
-        # Set up the client (i.e. "daniel")
-        client = APIClient()
-        token = Token.objects.get(user__username='daniel')
-        client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
-
-        # Obtain mario's ID
-        user_id = User.objects.get(username='mario').id
-
-        # Delete the user mario
-        response = client.delete(f'/account/user/{user_id}/')
+        response = self.mario_client.delete(f'/account/user/{self.daniel.id}/')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(User.objects.filter(username='mario').count(), 1)
+        self.assertEqual(User.objects.filter(username=self.daniel_data['username']).count(), 1)
 
-    def test_send_follower_petition(self):
-        # Set up the client
-        client = APIClient()
-        token = Token.objects.get(user__username='daniel')
-        client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+    def test_petitions(self):
+        # TODO: Send several petitions
+        for _ in range(1):
+            self.daniel_client.post(
+                '/account/send_follower_petition/',
+                {'user': self.mario.id}
+            )
 
-        # Send a petition
-        client.post(
-            '/account/send_follower_petition/',
-            {'user': User.objects.get(username='mario').id}
+        # There must be only one petition
+        petitions = FollowerPetition.objects.all().count()
+        self.assertEquals(petitions, 1)
+
+        # Get the list of petitions
+        request = self.mario_client.post('/account/follower_petition_list/')
+        self.assertEqual(len(request.data), 1)
+
+        # Accept the petition
+        self.mario_client.post(
+            '/account/accept_follower_petition/',
+            {'possible_follower': self.daniel.id}
         )
 
-        # There must be one follower petition
-        queryset = FollowerPetition.objects.filter(
-            user=User.objects.get(username='mario'),
-            possible_follower=User.objects.get(username='daniel')
-        )
-        self.assertEquals(queryset.count(), 1)
+        # There must be 0 follower petitions and 1 follower
+        follower_petitions = FollowerPetition.objects.all().count()
+        self.assertEqual(follower_petitions, 0)
+        followers = Follow.objects.all().count()
+        self.assertEqual(followers, 1)
+
 
     def test_accept_follower_petition(self):
         # Daniel sends a following petition to mario
@@ -149,3 +127,41 @@ class AccountTest(TestCase):
         client_mario.credentials(HTTP_AUTHORIZATION='Token ' + token_mario.key)
         response = client_mario.get('/account/follower_petition_list/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+def registration(*users_data) -> Tuple[int, int]:
+    '''
+    Creates new users and returns the number of users and accounts in the DB
+    '''
+    client = APIClient()
+    for user_data in users_data:
+        client.post('/account/registration/', user_data, format='json')
+
+    users_number = User.objects.all().count()
+    accounts_number = Account.objects.all().count()
+    return users_number, accounts_number
+
+def login(*users_data) -> int:
+    '''
+    Login users and returns the number of tokens in the DB
+    '''
+    client = APIClient()
+    for user_data in users_data:
+        client.post(
+            '/account/login/',
+            {'username': user_data['username'], 'password': user_data['password']}
+        )
+
+    token_number = Token.objects.all().count()
+    return token_number
+
+def generateTestClient(username: str) -> Tuple[APIClient, User]:
+    '''
+    Generates an authenticated APIClient ready to perform HTTP requests.
+    Returns the generated client as well as the user
+    '''
+    token = Token.objects.get(user__username=username)
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+    user = User.objects.get(username=username)
+    return client, user
