@@ -61,7 +61,7 @@ class AccountTest(TestCase):
         # Send several petitions
         for _ in range(5):
             self.daniel_client.post(
-                '/account/send_follower_petition/',
+                '/account/petition/send/',
                 {'user': self.mario.id}
             )
 
@@ -70,12 +70,12 @@ class AccountTest(TestCase):
         self.assertEquals(petitions, 1)
 
         # Get the list of petitions
-        request = self.mario_client.post('/account/follower_petition_list/')
+        request = self.mario_client.post('/account/petition/')
         self.assertEqual(len(request.data), 1)
 
         # Accept the petition
         self.mario_client.post(
-            '/account/accept_follower_petition/',
+            '/account/petition/accept/',
             {'possible_follower': self.daniel.id}
         )
 
