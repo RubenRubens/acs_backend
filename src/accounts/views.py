@@ -95,7 +95,7 @@ def acept_follower_petition(request):
                     follower=accept_follower
                 )
                 new_follower.save()
-                return Response({'mensaje': 'Todo bien'})
+                return Response({'message': 'Follower accepted'})
 
         except FollowerPetition.DoesNotExist:
             return Response(
