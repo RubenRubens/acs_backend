@@ -68,11 +68,11 @@ class AccountTest(TestCase):
         '''
         Retrieves Mario's user
         '''
-        response = self.mario_client.get(f'/user/{self.mario.id}/')
+        response = self.mario_client.get(f'/account/user/{self.mario.id}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        response = self.daniel_client.get(f'/user/{self.mario.id}/')
+        response = self.daniel_client.get(f'/account/user/{self.mario.id}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     def test_user_retrieve_forbidden(self):
         '''
         A user tries to retrieve someone else user.

@@ -5,21 +5,17 @@ from rest_framework.generics import (
     RetrieveUpdateDestroyAPIView,
     CreateAPIView
 )
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework import status
 from django.db import transaction
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
 
-from .serializer import (
-    AccountSerializer,
-    UserSerializer,
-    FollowerPetitionSerializer,
-    SendFollowerPetitionSerializer
-)
+from .serializer import *
 from .models import Account, FollowerPetition, Follow
-from .permissions import IsOwner
+from .permissions import IsFollower, IsOwner
 
 
 class AccountList(ListAPIView):
@@ -38,10 +34,73 @@ class UserCreate(CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
 
-class UserDetail(RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [IsOwner]
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def user_create(request):
+    
+    serializer = CreateUserSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    with transaction.atomic():
+        # Create a new user
+        user = User(
+            username=serializer.validated_data['username'],
+            first_name=serializer.validated_data['first_name'],
+            last_name=serializer.validated_data['last_name']
+        )
+        user.set_password(serializer.validated_data['password'])
+        user.save()
+
+        # Create a new account
+        account = Account(user=user)
+        account.save()
+
+        # Creates a new serializer for the user (contains the id)
+        user = User.objects.get(username=serializer.validated_data['username'])
+        serializer = CreateUserSerializer(user)
+
+        # Return the user created
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def user_detail(request, pk):
+
+    user = get_object_or_404(User, pk=pk)
+
+    if request.method == 'GET':
+        # permissions = [IsOwner | IsFollower]
+        # permissions.check_permissions(request.user, user)
+        serializer = RetrieveUserSerializer(user)
+        return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        # Check permissions
+        # permissions = [IsOwner]
+        # permissions.check_permissions(request.user, user)
+
+        # Serialize and validate the data
+        serializer = UpdateUserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # Update the user
+        user.username = serializer.validated_data['username']
+        user.first_name = serializer.validated_data['first_name']
+        user.last_name = serializer.validated_data['last_name']
+        user.set_password(serializer.validated_data['password'])
+        user.save()
+
+        # Creates a new serializer for the user (contains the id)
+        user = User.objects.get(username=serializer.validated_data['username'])
+        serializer = UpdateUserSerializer(user)
+
+        # Return the user updated
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    elif request.method == 'DELETE':
+        # permissions = [IsOwner]
+        # permissions.check_permissions(request.user, user)
+        user.delete()
+        return Response(status=status.HTTP_200_OK)
 
 
 class FollowerPetitionDetail(RetrieveDestroyAPIView):

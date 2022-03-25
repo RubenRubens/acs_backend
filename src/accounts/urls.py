@@ -5,8 +5,8 @@ from . import views
 urlpatterns = [
     path('account/', views.AccountList.as_view()),
     path('account/<int:pk>/', views.AccountDetail.as_view()),
-    path('user/<int:pk>/', views.UserDetail.as_view()),
-    path('registration/', views.UserCreate.as_view()),
+    path('user/<int:pk>/', views.user_detail),
+    path('registration/', views.user_create),
     path('petition/<int:pk>/', views.FollowerPetitionDetail.as_view()),
     path('petition/accept/', views.acept_follower_petition),
     path('petition/send/', views.send_follower_petition),

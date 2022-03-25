@@ -33,6 +33,28 @@ class FollowSerializer(ModelSerializer):
         read_only_fields = ['follow_time']
 
 
+class CreateUserSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'password', 'first_name', 'last_name']
+        read_only_fields = ['id']
+        extra_kwargs = {'password': {'write_only': True}}
+
+class UpdateUserSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'password', 'first_name', 'last_name']
+        read_only_fields = ['id', 'username']
+        extra_kwargs = {'password': {'write_only': True}}
+
+
+class RetrieveUserSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name']
+        read_only_fields = ['id', 'username', 'first_name', 'last_name']
+
+
 class UserSerializer(ModelSerializer):
     class Meta:
         model = User
