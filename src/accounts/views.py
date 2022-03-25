@@ -28,12 +28,6 @@ class AccountDetail(RetrieveUpdateAPIView):
     serializer_class = AccountSerializer
 
 
-class UserCreate(CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
-
-
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def user_create(request):
