@@ -73,6 +73,9 @@ class AccountTest(TestCase):
         '''
         response = self.mario_client.get(f'/account/user/{self.mario.id}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        Follow(user=self.mario, follower=self.daniel).save()
+        
         response = self.daniel_client.get(f'/account/user/{self.mario.id}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

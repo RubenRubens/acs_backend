@@ -2,9 +2,8 @@ from rest_framework.generics import (
     ListAPIView,
     RetrieveUpdateAPIView,
     RetrieveDestroyAPIView,
-    RetrieveUpdateDestroyAPIView,
-    CreateAPIView
 )
+from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
 from rest_framework.response import Response
@@ -56,21 +55,22 @@ def user_create(request):
         # Return the user created
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def user_detail(request, pk):
 
-    user = get_object_or_404(User, pk=pk)
+class UserDetail(APIView):
 
-    if request.method == 'GET':
-        # permissions = [IsOwner | IsFollower]
-        # permissions.check_permissions(request.user, user)
+    permission_classes = [IsOwner | IsFollower]
+    
+    def get(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        self.check_object_permissions(request, user)
         serializer = RetrieveUserSerializer(user)
         return Response(serializer.data)
 
-    elif request.method == 'PUT':
+    def put(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+
         # Check permissions
-        # permissions = [IsOwner]
-        # permissions.check_permissions(request.user, user)
+        self.check_object_permissions(request, user)
 
         # Serialize and validate the data
         serializer = UpdateUserSerializer(data=request.data)
@@ -89,13 +89,12 @@ def user_detail(request, pk):
 
         # Return the user updated
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    elif request.method == 'DELETE':
-        # permissions = [IsOwner]
-        # permissions.check_permissions(request.user, user)
+
+    def delete(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        self.check_object_permissions(request, user)
         user.delete()
         return Response(status=status.HTTP_200_OK)
-
 
 class FollowerPetitionDetail(RetrieveDestroyAPIView):
     queryset = FollowerPetition.objects.all()
