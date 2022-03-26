@@ -52,16 +52,19 @@ class AccountTest(TestCase):
         '''
         Retrieves Mario's account
         '''
-        response = self.mario_client.get(f'/account/user/{self.mario.id}/')
+        response = self.mario_client.get(f'/account/account/{self.mario.id}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        response = self.daniel_client.get(f'/account/user/{self.mario.id}/')
+
+        Follow(user=self.mario, follower=self.daniel).save()
+
+        response = self.daniel_client.get(f'/account/account/{self.mario.id}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_account_retrieve_forbidden(self):
         '''
         A user tries to retrieve someone else account.
         '''
-        response = self.vilma_client.get(f'/account/user/{self.daniel.id}/')
+        response = self.vilma_client.get(f'/account/account/{self.daniel.id}/')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_user_retrieve(self):
@@ -77,7 +80,7 @@ class AccountTest(TestCase):
         '''
         A user tries to retrieve someone else user.
         '''
-        response = self.vilma_client.get(f'/user/{self.daniel.id}/')
+        response = self.vilma_client.get(f'/account/user/{self.daniel.id}/')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_account_delation(self):

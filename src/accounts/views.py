@@ -15,7 +15,7 @@ from django.shortcuts import get_object_or_404
 
 from .serializer import *
 from .models import Account, FollowerPetition, Follow
-from .permissions import IsFollower, IsOwner
+from .permissions import *
 
 
 class AccountList(ListAPIView):
@@ -26,7 +26,7 @@ class AccountList(ListAPIView):
 class AccountDetail(RetrieveUpdateAPIView):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
-
+    permission_classes = [IsOwner | IsFollowerReadOnly]
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
