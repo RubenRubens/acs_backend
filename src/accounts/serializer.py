@@ -1,3 +1,4 @@
+from unicodedata import name
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
@@ -51,3 +52,6 @@ class RetrieveUserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'first_name', 'last_name']
         read_only_fields = ['id', 'username', 'first_name', 'last_name']
+
+class SearchUserSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=200)

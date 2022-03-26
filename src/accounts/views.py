@@ -165,3 +165,18 @@ def acept_follower_petition(request):
                 {'Error': 'The petition does not exist'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+@api_view(['POST'])
+def search_user(request):
+    '''
+    Search a user by username, first_name and last_name.
+    '''
+    serializer = SearchUserSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    name = serializer.validated_data['name']
+    query_users = User.objects.filter(username__icontains=name)
+    query_first_names = User.objects.filter(first_name__icontains=name)
+    query_last_names = User.objects.filter(last_name__icontains=name)
+    query = (query_users | query_first_names | query_last_names).distinct()
+    serializer = RetrieveUserSerializer(query, many=True)
+    return Response(serializer.data)

@@ -129,6 +129,19 @@ class AccountTest(TestCase):
         self.assertEqual(follower_petitions, 0)
         followers = Follow.objects.all().count()
         self.assertEqual(followers, 1)
+    
+    def test_search_user(self):
+        # Search for a user
+        request = self.mario_client.post('/account/search/', {'name': 'daniel'})
+        self.assertEqual(len(request.data), 1)
+        request = self.mario_client.post('/account/search/', {'name': 'Daniel'})
+        self.assertEqual(len(request.data), 1)
+        request = self.mario_client.post('/account/search/', {'name': 'B.'})
+        self.assertEqual(len(request.data), 1)
+
+        # Search for a user that does not exist
+        request = self.mario_client.post('/account/search/', {'name': 'Maria'})
+        self.assertEqual(len(request.data), 0)
 
 
 def registration(*users_data) -> Tuple[int, int]:
