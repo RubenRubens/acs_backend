@@ -115,8 +115,16 @@ class AccountTest(TestCase):
         self.assertEquals(petitions, 1)
 
         # Get the list of petitions
-        request = self.mario_client.post('/account/petition/')
-        self.assertEqual(len(request.data), 1)
+        response = self.mario_client.get('/account/petition/')
+        self.assertEqual(len(response.data), 1)
+
+        # Retrieve the petition
+        response = self.mario_client.get('/account/petition/1/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['possible_follower'], self.daniel.id)
+        self.assertEqual(response.data['user'], self.mario.id)
+        self.assertTrue(isinstance(response.data['petition_time'], str))
+        self.assertTrue(isinstance(response.data['id'], int))
 
         # Accept the petition
         self.mario_client.post(

@@ -1,7 +1,7 @@
 from rest_framework import permissions
 from django.contrib.auth.models import User
 
-from .models import Account, Follow
+from .models import Account, Follow, FollowerPetition
 
 class IsOwner(permissions.BasePermission):
     '''
@@ -13,6 +13,8 @@ class IsOwner(permissions.BasePermission):
         elif isinstance(obj, User):
             return obj == request.user
         elif isinstance(obj, Account):
+            return obj.user == request.user
+        elif isinstance(obj, FollowerPetition):
             return obj.user == request.user
 
 class IsFollower(permissions.BasePermission):
