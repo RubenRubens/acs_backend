@@ -31,3 +31,9 @@ class Follow(models.Model):
 
     class Meta:
         unique_together = ('user', 'follower')
+
+    def followers(user : User):
+        return Follow.objects.filter(user=user)
+
+    def following(user : User):
+        return Follow.objects.filter(follower=user)
