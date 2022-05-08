@@ -8,6 +8,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework import status
+from django.http.response import Http404
+from django.http import FileResponse
 from django.db import transaction
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
@@ -95,6 +97,22 @@ class UserDetail(APIView):
         self.check_object_permissions(request, user)
         user.delete()
         return Response(status=status.HTTP_200_OK)
+
+
+class RetrieveProfilePicture(APIView):
+    '''
+    Retrieve the profile picture
+    '''
+    permission_classes = [IsOwner | IsFollower]
+
+    def get(self, request, user_pk):
+        try:
+            account = Account.objects.get(user__pk=user_pk)
+        except Account.DoesNotExist:
+            raise Http404
+        self.check_object_permissions(request, account)
+        return FileResponse(open(account.profile_picture.path, 'rb'))
+
 
 class FollowerPetitionDetail(RetrieveDestroyAPIView):
     queryset = FollowerPetition.objects.all()
