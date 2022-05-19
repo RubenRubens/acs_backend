@@ -1,8 +1,8 @@
-cd src
+cd /app/src
 
-while ! python manage.py sqlflush > /dev/null 2>&1 ;do
-echo "Waiting for the db to be ready."
-sleep 1
+while django-admin check --database default; do
+	echo "Waiting for the DB to be ready."
+	sleep 2
 done
 
 python manage.py migrate
