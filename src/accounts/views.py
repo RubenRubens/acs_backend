@@ -99,6 +99,34 @@ class UserDetail(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
+class ListFollowers(APIView):
+    '''
+    List the followers of a certain user
+    '''
+    permission_classes = [IsOwner | IsFollower]
+
+    def get(self, request, user_pk):
+        user = get_object_or_404(User, pk=user_pk)
+        self.check_object_permissions(request, user)
+        queryset = Follow.followers(user)
+        serializer = UserSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class ListFollowing(APIView):
+    '''
+    List the users a certain user is following
+    '''
+    permission_classes = [IsOwner | IsFollower]
+
+    def get(self, request, user_pk):
+        user = get_object_or_404(User, user_pk)
+        self.check_object_permissions(request, user)
+        queryset = Follow.following(user)
+        serializer = UserSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
 class RetrieveProfilePicture(APIView):
     '''
     Retrieve the profile picture
@@ -198,3 +226,4 @@ def search_user(request):
     query = (query_users | query_first_names | query_last_names).distinct()
     serializer = RetrieveUserSerializer(query, many=True)
     return Response(serializer.data)
+

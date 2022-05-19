@@ -11,6 +11,11 @@ class AccountSerializer(serializers.ModelSerializer):
         read_only_fields = ['user']
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name']
+
 class FollowerPetitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = FollowerPetition
