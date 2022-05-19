@@ -13,5 +13,7 @@ urlpatterns = [
     path('petition/send/', views.send_follower_petition),
     path('petition/', views.list_follower_petitions),
     path('search/', views.search_user),
+    path('followers/<int:user_pk>/', views.ListFollowers.as_view()),
+    path('following/<int:user_pk>/', views.ListFollowing.as_view()),
     path('', include('dj_rest_auth.urls')),
 ]
