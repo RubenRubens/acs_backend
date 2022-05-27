@@ -22,3 +22,12 @@ services:
       - POSTGRES_PASSWORD=postgres
     depends_on:
       - db
+
+  redis:
+    image: redis
+    command: redis-server
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/data
+
