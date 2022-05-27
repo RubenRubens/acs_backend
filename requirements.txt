@@ -9,3 +9,4 @@ django-allauth
 pyyaml
 uritemplate
 drf-yasg
+redis
