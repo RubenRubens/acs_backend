@@ -156,3 +156,17 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication'
     ]
 }
+
+# Redis configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': 'redis://redis:6379',
+        'KEY_PREFIX': '',
+        'TIMEOUT': None,
+    }
+}
+
+# Cache keys
+LIKES = 'post_likes_'
+

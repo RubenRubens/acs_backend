@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.http import response
 from django.test import TestCase
+from photos import likes_cache
 from rest_framework.test import APIClient
 from rest_framework.authtoken.models import Token
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -11,6 +12,7 @@ from itertools import pairwise
 from typing import List
 
 from photos.models import Post, Comment
+from photos.likes_cache import get_likes
 
 
 class PostTest(TestCase):
@@ -50,6 +52,21 @@ class PostTest(TestCase):
             {'username': 'daniel', 'password': 'secret_001'}
         )
 
+        client.post(
+            '/account/registration/',
+            {
+                'username': 'unfriendly',
+                'password': 'secret_001',
+                'first_name': 'Unfriendly',
+                'last_name': 'U.'
+            },
+            format='json'
+        )
+        client.post(
+            '/account/login/',
+            {'username': 'unfriendly', 'password': 'secret_001'}
+        )
+
         # Set up the clients
         self.mario = APIClient()
         token_mario = Token.objects.get(user__username='mario')
@@ -58,6 +75,10 @@ class PostTest(TestCase):
         self.daniel = APIClient()
         token_daniel = Token.objects.get(user__username='daniel')
         self.daniel.credentials(HTTP_AUTHORIZATION='Token ' + token_daniel.key)
+
+        self.unfriendly = APIClient()
+        token_unfriendly = Token.objects.get(user__username='unfriendly')
+        self.unfriendly.credentials(HTTP_AUTHORIZATION='Token ' + token_unfriendly.key)
 
         # Daniel is following Mario
         self.daniel.post(
@@ -82,7 +103,9 @@ class PostTest(TestCase):
 
         # Mario has successfully upload the picture
         self.assertEquals(Post.objects.filter(author__username='mario').count(), 1)
-        self.assertEquals(Post.objects.get(author__username='mario').likes, 0)
+        post = Post.objects.get(author__username='mario')
+        self.assertEquals(post.likes.all().count(), 0)
+        self.assertEquals(get_likes(post.id), 0)
 
     def test_list_posts(self):
         '''
@@ -127,6 +150,7 @@ class PostTest(TestCase):
         # Mario deletes successfully the post
         self.mario.delete(f'/photos/post_destroy/{post_id}/')
         self.assertEquals(Post.objects.filter(author__username='mario').count(), 0)
+        self.assertEquals(likes_cache.get_likes(post_id), None)
 
     def test_retrieve_post(self):
         '''
@@ -212,6 +236,56 @@ class PostTest(TestCase):
         feed = json.loads(json_response)
         dates = [f['date_published'] for f in feed]
         self.assertTrue(isOrderByDate(dates))
+
+    def test_likes(self):
+        # Mario posts something
+        self.mario.post(
+            '/photos/post/',
+            {'image_file': SimpleUploadedFile(name='test_image.jpg', content=open('photos/test/foo.jpg', 'rb').read(), content_type='image/jpeg')}
+        )
+        post = Post.objects.get(author__username='mario')
+
+        # Mario likes to the post
+        response = self.mario.post(f'/photos/post_like/{post.id}/')
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertEquals(get_likes(post.id), 1)
+        self.assertEquals(post.likes.all().count(), 1)
+
+        # Daniel likes to the post
+        response = self.daniel.post(f'/photos/post_like/{post.id}/')
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertEquals(get_likes(post.id), 2)
+        self.assertEquals(post.likes.all().count(), 2)
+        
+        # A stranger likes to the post
+        response = self.unfriendly.post(f'/photos/post_like/{post.id}/')
+        self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEquals(get_likes(post.id), 2)
+        self.assertEquals(post.likes.all().count(), 2)
+
+        # Mario removes the like
+        response = self.mario.delete(f'/photos/post_like/{post.id}/')
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertEquals(get_likes(post.id), 1)
+        self.assertEquals(post.likes.all().count(), 1)
+
+        # Daniel removes the like
+        response = self.daniel.delete(f'/photos/post_like/{post.id}/')
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertEquals(get_likes(post.id), 0)
+        self.assertEquals(post.likes.all().count(), 0)
+        
+        # Daniel removes the like once again
+        response = self.daniel.delete(f'/photos/post_like/{post.id}/')
+        self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEquals(get_likes(post.id), 0)
+        self.assertEquals(post.likes.all().count(), 0)
+
+        # Some stranger attempts to remove the like
+        response = self.unfriendly.delete(f'/photos/post_like/{post.id}/')
+        self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEquals(get_likes(post.id), 0)
+        self.assertEquals(post.likes.all().count(), 0)
 
 
 class CommentTest(TestCase):
@@ -422,3 +496,74 @@ def isOrderByDate(dates : List[str]) -> bool:
         if (t1 < t2):
             return False
     return True
+
+
+class LikePost(TestCase):
+    def setUp(self):
+        '''
+        Create two users. Daniel is a follower of Mario.
+        '''
+        client = APIClient()
+        client.post(
+            '/account/registration/',
+            {
+                'username': 'mario',
+                'password': 'secret_001',
+                'first_name': 'Mario',
+                'last_name': 'A.'
+            },
+            format='json'
+        )
+        client.post(
+            '/account/login/',
+            {'username': 'mario', 'password': 'secret_001'}
+        )
+
+        client.post(
+            '/account/registration/',
+            {
+                'username': 'daniel',
+                'password': 'secret_001',
+                'first_name': 'Daniel',
+                'last_name': 'B.'
+            },
+            format='json'
+        )
+        client.post(
+            '/account/login/',
+            {'username': 'daniel', 'password': 'secret_001'}
+        )
+
+        # Set up the clients
+        self.mario = APIClient()
+        token_mario = Token.objects.get(user__username='mario')
+        self.mario.credentials(HTTP_AUTHORIZATION='Token ' + token_mario.key)
+        
+        self.daniel = APIClient()
+        token_daniel = Token.objects.get(user__username='daniel')
+        self.daniel.credentials(HTTP_AUTHORIZATION='Token ' + token_daniel.key)
+
+        # Daniel is following Mario
+        self.daniel.post(
+            '/account/petition/send/',
+            {'user': User.objects.get(username='mario').id}
+        )
+
+        self.mario.post(
+            '/account/petition/accept/',
+            {'possible_follower': User.objects.get(username='daniel').id}
+        )
+
+        # Mario creates a post
+        self.mario.post(
+            '/photos/post/',
+            {'image_file': SimpleUploadedFile(name='test_image.jpg', content=open('photos/test/foo.jpg', 'rb').read(), content_type='image/jpeg')}
+        )
+        self.mario_post_id = Post.objects.get(author__username='mario').id
+
+        # Daniel creates a post
+        self.daniel.post(
+            '/photos/post/',
+            {'image_file': SimpleUploadedFile(name='test_image.jpg', content=open('photos/test/foo.jpg', 'rb').read(), content_type='image/jpeg')}
+        )
+        self.daniel_post_id = Post.objects.get(author__username='daniel').id
