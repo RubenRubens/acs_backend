@@ -237,7 +237,7 @@ class PostTest(TestCase):
         dates = [f['date_published'] for f in feed]
         self.assertTrue(isOrderByDate(dates))
 
-    def test_likes(self):
+    def test_likes_create_and_destroy(self):
         # Mario posts something
         self.mario.post(
             '/photos/post/',
@@ -286,6 +286,23 @@ class PostTest(TestCase):
         self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEquals(get_likes(post.id), 0)
         self.assertEquals(post.likes.all().count(), 0)
+    
+    def test_likes_list_users(self):
+        # Mario posts something
+        self.mario.post(
+            '/photos/post/',
+            {'image_file': SimpleUploadedFile(name='test_image.jpg', content=open('photos/test/foo.jpg', 'rb').read(), content_type='image/jpeg')}
+        )
+        post = Post.objects.get(author__username='mario')
+
+        # Daniel and Mario likes to the post
+        self.daniel.post(f'/photos/post_like/{post.id}/')
+        self.mario.post(f'/photos/post_like/{post.id}/')
+
+        # Mario gets the list of user that like the post
+        response = self.mario.get(f'/photos/post_like/{post.id}/')
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertEquals(len(response.data), 2)
 
 
 class CommentTest(TestCase):

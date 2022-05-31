@@ -11,6 +11,7 @@ from rest_framework.exceptions import PermissionDenied
 
 from accounts.permissions import IsOwner, IsFollower
 from accounts.models import Follow
+from accounts.serializer import UserSerializer
 from .models import Comment, Post
 from .serializers import CommentSerializer, PostSerializer
 from . import likes_cache
@@ -116,12 +117,22 @@ def feed(request):
 
 
 class LikePost(APIView):
-    '''
-    Submit a like to a particular post.
-    '''
     permission_classes = [IsOwner | IsFollower]
 
+    def get(self, request, post_pk):
+        '''
+        List the users that like a particular post.
+        '''
+        post = get_object_or_404(Post, pk=post_pk)
+        self.check_object_permissions(request, post)
+        queryset = post.likes.all()
+        serializer = UserSerializer(queryset, many=True)
+        return Response(serializer.data)
+
     def post(self, request, post_pk):
+        '''
+        Submit a like to a particular post.
+        '''
         post = get_object_or_404(Post, pk=post_pk)
         self.check_object_permissions(request, post)
         post.likes.add(request.user)
@@ -129,6 +140,9 @@ class LikePost(APIView):
         return Response({'message': 'Like successfully added'})
 
     def delete(self, request, post_pk):
+        '''
+        Remove a like to a particular post.
+        '''
         post = get_object_or_404(Post, pk=post_pk)
         self.check_object_permissions(request, post)
         if not (request.user in post.likes.all()):
