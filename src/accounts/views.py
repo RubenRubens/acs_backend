@@ -120,7 +120,7 @@ class ListFollowing(APIView):
     permission_classes = [IsOwner | IsFollower]
 
     def get(self, request, user_pk):
-        user = get_object_or_404(User, user_pk)
+        user = get_object_or_404(User, pk=user_pk)
         self.check_object_permissions(request, user)
         queryset = Follow.following(user)
         serializer = UserSerializer(queryset, many=True)

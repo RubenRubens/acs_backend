@@ -32,9 +32,14 @@ class Follow(models.Model):
     class Meta:
         unique_together = ('user', 'follower')
 
-    def followers(user : User):
-        return Follow.objects.filter(user=user)
+    def followers(user: User):
+        queryset = Follow.objects.filter(user=user).values_list('follower', flat=True)
+        return User.objects.filter(pk__in=queryset)
 
-    def following(user : User):
-        return Follow.objects.filter(follower=user)
+    def following(user: User):
+        queryset = Follow.objects.filter(follower=user).values_list('user', flat=True)
+        return User.objects.filter(pk__in=queryset)
+
+    def __str__(self):
+        return f'User: {self.user} - Follower: {self.follower}'
 
