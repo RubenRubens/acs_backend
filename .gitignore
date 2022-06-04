@@ -2,4 +2,4 @@
 *.pyc
 src/uploads
 src/.vscode/
-reids-data/
+redis-data/
