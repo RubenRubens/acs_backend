@@ -2,4 +2,5 @@
 *.pyc
 src/uploads
 src/.vscode/
+src/staticfiles
 redis-data/

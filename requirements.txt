@@ -10,3 +10,4 @@ pyyaml
 uritemplate
 drf-yasg
 redis
+whitenoise
