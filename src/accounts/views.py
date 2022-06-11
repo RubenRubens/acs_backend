@@ -27,14 +27,15 @@ class AccountList(ListAPIView):
 class AccountDetail(RetrieveUpdateAPIView):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
-    permission_classes = [IsOwner | IsFollowerReadOnly]
+    # permission_classes = [IsOwner | IsFollowerReadOnly]
+
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def user_create(request):
     
-    serializer = CreateUserSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
+    serializer = UserSerializer(data=request.data)
+    serializer.is_valid()
 
     with transaction.atomic():
         # Create a new user
@@ -52,7 +53,7 @@ def user_create(request):
 
         # Creates a new serializer for the user (contains the id)
         user = User.objects.get(username=serializer.validated_data['username'])
-        serializer = CreateUserSerializer(user)
+        serializer = UserSerializer(user)
 
         # Return the user created
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -64,8 +65,8 @@ class UserDetail(APIView):
     
     def get(self, request, pk):
         user = get_object_or_404(User, pk=pk)
-        self.check_object_permissions(request, user)
-        serializer = RetrieveUserSerializer(user)
+        # self.check_object_permissions(request, user)
+        serializer = UserSerializer(user)
         return Response(serializer.data)
 
     def put(self, request, pk):
@@ -75,7 +76,7 @@ class UserDetail(APIView):
         self.check_object_permissions(request, user)
 
         # Serialize and validate the data
-        serializer = UpdateUserSerializer(data=request.data)
+        serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
         # Update the user
@@ -87,7 +88,7 @@ class UserDetail(APIView):
 
         # Creates a new serializer for the user (contains the id)
         user = User.objects.get(username=serializer.validated_data['username'])
-        serializer = UpdateUserSerializer(user)
+        serializer = UserSerializer(user)
 
         # Return the user updated
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -99,11 +100,35 @@ class UserDetail(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
+class RetrieveLoggedUser(APIView):
+    '''
+    Retrieve the information of the logged in user
+    '''
+    
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
+
+
+class IAmAFollower(APIView):
+    '''
+    If you are a follower return a 200 code, otherwise return a 4xx.
+    '''
+    def get(self, request, user_pk):
+        user = get_object_or_404(User, pk=user_pk)
+        if request.user in Follow.following(user=user):
+            return Response({'message': 'You are a follower of this user'})
+        return Response(
+            {'message': 'You are a not follower of this user'},
+            status=status.HTTP_418_IM_A_TEAPOT
+        )
+
+
 class ListFollowers(APIView):
     '''
     List the followers of a certain user
     '''
-    permission_classes = [IsOwner | IsFollower]
+    permission_classes = [IsOwner | IAmAFollower]
 
     def get(self, request, user_pk):
         user = get_object_or_404(User, pk=user_pk)
@@ -117,7 +142,7 @@ class ListFollowing(APIView):
     '''
     List the users a certain user is following
     '''
-    permission_classes = [IsOwner | IsFollower]
+    permission_classes = [IsOwner | IAmAFollower]
 
     def get(self, request, user_pk):
         user = get_object_or_404(User, pk=user_pk)
@@ -131,7 +156,7 @@ class RetrieveProfilePicture(APIView):
     '''
     Retrieve the profile picture
     '''
-    permission_classes = [IsOwner | IsFollower]
+    permission_classes = [IsOwner | IAmAFollower]
 
     def get(self, request, user_pk):
         try:
@@ -212,6 +237,7 @@ def acept_follower_petition(request):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+
 @api_view(['POST'])
 def search_user(request):
     '''
@@ -224,6 +250,5 @@ def search_user(request):
     query_first_names = User.objects.filter(first_name__icontains=name)
     query_last_names = User.objects.filter(last_name__icontains=name)
     query = (query_users | query_first_names | query_last_names).distinct()
-    serializer = RetrieveUserSerializer(query, many=True)
+    serializer = UserSerializer(query, many=True)
     return Response(serializer.data)
-

@@ -11,13 +11,6 @@ class AccountSerializer(serializers.ModelSerializer):
         read_only_fields = ['user']
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'first_name', 'last_name']
-        read_only_fields = ['id']
-
-
 class FollowerPetitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = FollowerPetition
@@ -39,26 +32,13 @@ class FollowSerializer(serializers.ModelSerializer):
         read_only_fields = ['follow_time']
 
 
-class CreateUserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'password', 'first_name', 'last_name']
         read_only_fields = ['id']
         extra_kwargs = {'password': {'write_only': True}}
 
-class UpdateUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'password', 'first_name', 'last_name']
-        read_only_fields = ['id', 'username']
-        extra_kwargs = {'password': {'write_only': True}}
-
-
-class RetrieveUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'first_name', 'last_name']
-        read_only_fields = ['id', 'username', 'first_name', 'last_name']
 
 class SearchUserSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=200)
