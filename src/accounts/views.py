@@ -158,12 +158,13 @@ class RetrieveProfilePicture(APIView):
     permission_classes = [IsOwner | IAmAFollower]
 
     def get(self, request, user_pk):
-        try:
-            account = Account.objects.get(user__pk=user_pk)
-        except Account.DoesNotExist:
-            raise Http404
+        account = get_object_or_404(Account, user__pk=user_pk)
         self.check_object_permissions(request, account)
-        return FileResponse(open(account.profile_picture.path, 'rb'))
+        try:
+            print("wtf")
+            return FileResponse(open(account.profile_picture.path, 'rb'))
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 class FollowerPetitionDetail(RetrieveDestroyAPIView):
