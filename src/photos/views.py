@@ -2,12 +2,13 @@ from django.contrib.auth.models import User
 from django.http.response import Http404, HttpResponseForbidden
 from rest_framework import generics
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view
 from django.db.models import Subquery
 from rest_framework.views import APIView
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import PermissionDenied
+from rest_framework import status
 
 from accounts.permissions import IsOwner, IsFollower
 from accounts.models import Follow
@@ -100,12 +101,12 @@ class RetrieveImage(APIView):
     permission_classes = [IsOwner | IsFollower]
 
     def get(self, request, post_pk):
-        try:
-            post = Post.objects.get(pk=post_pk)
-        except Post.DoesNotExist:
-            raise Http404
+        post = get_object_or_404(Post, pk=post_pk)
         self.check_object_permissions(request, post)
-        return FileResponse(open(post.image_file.path, 'rb'))
+        try:
+            return FileResponse(open(post.image_file.path, 'rb'))
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(['GET'])
