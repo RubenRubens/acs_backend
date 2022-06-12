@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 
 from .models import Account, Follow, FollowerPetition
 
+
 class IsOwner(permissions.BasePermission):
     '''
     Allow the author to do anything
@@ -16,6 +17,7 @@ class IsOwner(permissions.BasePermission):
             return obj.user == request.user
         elif isinstance(obj, FollowerPetition):
             return obj.user == request.user
+
 
 class IsFollower(permissions.BasePermission):
     '''
@@ -62,3 +64,12 @@ class IsFollowerReadOnly(permissions.BasePermission):
                 return True
             except Follow.DoesNotExist:
                 return False
+
+
+class ReadOnly(permissions.BasePermission):
+    '''
+    Limits the actions to be read only
+    '''
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True

@@ -27,7 +27,7 @@ class AccountList(ListAPIView):
 class AccountDetail(RetrieveUpdateAPIView):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
-    # permission_classes = [IsOwner | IsFollowerReadOnly]
+    permission_classes = [IsOwner | ReadOnly]
 
 
 @api_view(['POST'])
@@ -65,7 +65,6 @@ class UserDetail(APIView):
     
     def get(self, request, pk):
         user = get_object_or_404(User, pk=pk)
-        # self.check_object_permissions(request, user)
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
