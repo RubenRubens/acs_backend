@@ -155,11 +155,9 @@ class RetrieveProfilePicture(APIView):
     '''
     Retrieve the profile picture
     '''
-    permission_classes = [IsOwner | IAmAFollower]
 
     def get(self, request, user_pk):
         account = get_object_or_404(Account, user__pk=user_pk)
-        self.check_object_permissions(request, account)
         try:
             print("wtf")
             return FileResponse(open(account.profile_picture.path, 'rb'))
