@@ -111,8 +111,8 @@ class RetrieveImage(APIView):
 
 @api_view(['GET'])
 def feed(request):
-    following = Follow.objects.filter(follower=request.user).values('id')
-    user_feed = Post.objects.annotate(author__pk=Subquery(following)).order_by('-date_published')
+    following = Follow.following(request.user)
+    user_feed = Post.objects.filter(author__in=following).order_by('-date_published')
     serializer = PostSerializer(user_feed, many=True)
     return Response(serializer.data)
 
