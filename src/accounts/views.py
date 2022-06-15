@@ -127,7 +127,7 @@ class ListFollowers(APIView):
     '''
     List the followers of a certain user
     '''
-    permission_classes = [IsOwner | IAmAFollower]
+    permission_classes = [IsOwner | IsFollower]
 
     def get(self, request, user_pk):
         user = get_object_or_404(User, pk=user_pk)
@@ -141,7 +141,7 @@ class ListFollowing(APIView):
     '''
     List the users a certain user is following
     '''
-    permission_classes = [IsOwner | IAmAFollower]
+    permission_classes = [IsOwner | IsFollower]
 
     def get(self, request, user_pk):
         user = get_object_or_404(User, pk=user_pk)
