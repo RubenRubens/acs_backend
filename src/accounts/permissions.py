@@ -17,7 +17,7 @@ class IsOwner(permissions.BasePermission):
             return obj.user == request.user
         elif isinstance(obj, FollowerPetition):
             return obj.user == request.user
-
+        return False
 
 class IsFollower(permissions.BasePermission):
     '''
@@ -73,3 +73,9 @@ class ReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
             return True
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return False
