@@ -8,8 +8,8 @@ from .likes_cache import get_likes
 
 class PostSerializer(serializers.ModelSerializer):
 	image_url = serializers.SerializerMethodField(read_only=True)
-	likes_number = serializers.IntegerField(read_only=True)
-	
+	likes_number = serializers.SerializerMethodField(read_only=True)
+
 	class Meta:
 		model = Post
 		fields = ['author', 'image_file', 'date_published', 'likes_number', 'image_url']
