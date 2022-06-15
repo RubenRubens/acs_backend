@@ -86,10 +86,9 @@ class CommentList(APIView):
     permission_classes = [IsOwner | IsFollower]
 
     def get(self, request, post_pk):
-        comments = Comment.objects.filter(post__pk=post_pk).order_by('date_published')
-        if not comments:
-            raise Http404
-        self.check_object_permissions(request, Post.objects.get(pk=post_pk))
+        post = get_object_or_404(Post, pk=post_pk)
+        self.check_object_permissions(request, post)
+        comments = Comment.objects.filter(post=post).order_by('date_published')
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data)
 
