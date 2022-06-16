@@ -4,9 +4,9 @@ from drf_yasg import openapi
 
 docs_view = get_schema_view(
 	openapi.Info(
-		title='asc api',
+		title='Paranoid Social Network API',
 		default_version='dev',
-		description='An API for a social network',
+		description='An opensource social network',
 		license=openapi.License(name='MIT License')
 	),
 	public=True,
