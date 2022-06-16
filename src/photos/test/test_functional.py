@@ -227,9 +227,9 @@ class PostTest(TestCase):
             )
 
         # Mario gets its feed
-        response = self.mario.get('/photos/feed/')
+        response = self.daniel.get('/photos/feed/')
         self.assertEquals(response.status_code, status.HTTP_200_OK)
-        self.assertEquals(len(response.data), 4)
+        self.assertEquals(len(response.data), 1)
         
         # Check if the feed is ordered by date
         json_response = response.content.decode('utf8').replace("'", '"')
