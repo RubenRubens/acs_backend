@@ -19,6 +19,7 @@ class IsOwner(permissions.BasePermission):
             return obj.user == request.user
         return False
 
+
 class IsFollower(permissions.BasePermission):
     '''
     Allow a follower to do anything
